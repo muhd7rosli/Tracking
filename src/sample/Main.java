@@ -25,7 +25,7 @@ import javafx.stage.Stage;
 public class Main extends Application {
 
     /**
-     * Start the apps
+     * Start the apps comment
      * @param primaryStage
      * @throws Exception
      */
