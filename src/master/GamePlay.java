@@ -25,6 +25,7 @@ import javafx.stage.Stage;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 
 /**
  * GamePlay Class
@@ -32,24 +33,91 @@ import java.math.RoundingMode;
  */
 public class GamePlay extends Application {
 
-    private void move(ImageView car, String direction, double orientation){
+    private void move(ImageView car, String direction){
         double currentX = car.getX(), currentY = car.getY();
         double currentOrientation = car.getRotate();
 
-        double newOrientation = Math.toRadians(currentOrientation + orientation);
+        double newOrientation = Math.toRadians(currentOrientation);
 
         double newX, newY;
         if(direction.equals("FORWARD")) {
-            newX = currentX - currentOrientation * Math.cos(newOrientation);
-            newY = currentY - currentOrientation * Math.sin(newOrientation);
+            newX = currentX - 1.0 * Math.cos(newOrientation);
+            newY = currentY - 1.0 * Math.sin(newOrientation);
         }
         else {
-            newX = currentX + currentOrientation * Math.cos(newOrientation);
-            newY = currentY + currentOrientation * Math.sin(newOrientation);
+            newX = currentX + 1.0 * Math.cos(newOrientation);
+            newY = currentY + 1.0 * Math.sin(newOrientation);
         }
 
         car.setX(newX);
         car.setY(newY);
+    }
+
+    /**
+     *
+     * @param car
+     * @param direction
+     */
+    private void move(ImageView car, String direction, double speed){
+        double currentX = car.getX(), currentY = car.getY();
+        double currentOrientation = car.getRotate();
+
+        double newOrientation = Math.toRadians(currentOrientation);
+
+        double newX, newY;
+        if(direction.equals("FORWARD")) {
+            newX = currentX - speed * Math.cos(newOrientation);
+            newY = currentY - speed * Math.sin(newOrientation);
+        }
+        else {
+            newX = currentX + speed * Math.cos(newOrientation);
+            newY = currentY + speed * Math.sin(newOrientation);
+        }
+
+        car.setX(newX);
+        car.setY(newY);
+    }
+
+    /**
+     *
+     * @param car
+     * @param direction
+     * @param orientation
+     */
+    private void move(final ImageView car, String direction, double speed, double orientation){
+        double currentX = car.getX(), currentY = car.getY();
+        double currentOrientation = car.getRotate();
+
+        double newOrientation = currentOrientation + orientation;
+        final double newOrientationRad = Math.toRadians(newOrientation);
+
+        final double newX, newY;
+        if(direction.equals("FORWARD")) {
+            newX = currentX - speed * Math.cos(newOrientationRad);
+            newY = currentY - speed * Math.sin(newOrientationRad);
+        }
+        else {
+            newX = currentX + speed * Math.cos(newOrientationRad);
+            newY = currentY + speed * Math.sin(newOrientationRad);
+        }
+
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                car.setRotate(Math.toDegrees(newOrientationRad));
+                car.setX(newX);
+                car.setY(newY);
+            }
+        });
+
+    }
+
+    private String displayNumber(double number){
+
+        BigDecimal bd = new BigDecimal(number);
+        bd.setScale(3, BigDecimal.ROUND_FLOOR);
+        DecimalFormat df = new DecimalFormat("##.###");
+        return df.format(number);
     }
 
     /**
@@ -83,13 +151,21 @@ public class GamePlay extends Application {
         displaySpeed.setDisable(true);
         displaySpeed.setPrefWidth(100);
 
+        Label instructionLbl = new Label("Pressed UP key to move forward, " +
+                "Pressed DOWN key to move backward, " + "\n" +
+                "Pressed LEFT key to move left, " + "\n" +
+                "Pressed RIGHT key to move right, " + "\n" +
+                "Pressed W key to accelerate, " + "\n" +
+                "Pressed S key to decelerate.");
+        instructionLbl.setPrefWidth(canvasWidth);
+
         HBox infoBar = new HBox();
         infoBar.setSpacing(10);
         infoBar.getChildren().addAll(displayPositionLabel, displayPosition,
                 displayOrientationLabel, displayOrientation, displaySpeedLabel, displaySpeed);
 
         // add all elements
-        container.getChildren().addAll(infoBar, canvas);
+        container.getChildren().addAll(infoBar, instructionLbl, canvas);
 
         Scene scene = new Scene(container);
 
@@ -100,12 +176,13 @@ public class GamePlay extends Application {
         car.setY(canvasHeight/2.0 - car.getFitHeight());
         car.setRotate(90.0);
 
-        final DoubleProperty movementUnit = new SimpleDoubleProperty(10.0);
+        final DoubleProperty movementUnit = new SimpleDoubleProperty(0.0);
         final StringProperty coordinate = new SimpleStringProperty();
+        final StringProperty rotation = new SimpleStringProperty(String.valueOf(car.getRotate()));
 
         // binding
         displayPosition.textProperty().bind(coordinate);
-        displayOrientation.textProperty().bind(car.rotateProperty().asString());
+        displayOrientation.textProperty().bind(rotation);
         displaySpeed.textProperty().bind(movementUnit.asString());
 
         final MultiplePressedKeysEventHandler keyHandler =
@@ -113,59 +190,52 @@ public class GamePlay extends Application {
                     @Override
                     public void handle(MultiplePressedKeysEventHandler.MultiKeyEvent ke) {
 
-                        // check if both LEFT and A keys are pressed
-                        if (ke.isPressed(KeyCode.LEFT)  && ke.isPressed(KeyCode.A)) {
-                            System.out.println("LEFT and A");
-                        }
-                        // check if only LEFT is pressed
-                        else if(ke.isPressed(KeyCode.LEFT) && !ke.isPressed(KeyCode.A)){
-                            System.out.println("LEFT");
-                        }
-                        // check if only A is pressed
-                        else if(!ke.isPressed(KeyCode.LEFT) && ke.isPressed(KeyCode.A)){
-                            System.out.println("A");
-                        }
+                        // check if both UP and LEFT keys are pressed
+                        if (ke.isPressed(KeyCode.UP)  && ke.isPressed(KeyCode.LEFT)) {
+                            System.out.println("UP and LEFT");
+                            move(car, "FORWARD", movementUnit.getValue(), -10.0);
 
-                        // check if both RIGHT and D keys are pressed
-                        if (ke.isPressed(KeyCode.RIGHT) && ke.isPressed(KeyCode.D)) {
-                            System.out.println("RIGHT and D");
                         }
-                        // check if only RIGHT is pressed
-                        else if(ke.isPressed(KeyCode.RIGHT) && !ke.isPressed(KeyCode.D)){
-                            System.out.println("RIGHT");
+                        // check if only UP and RIGHT keys are pressed
+                        else if(ke.isPressed(KeyCode.UP) && ke.isPressed(KeyCode.RIGHT)){
+                            System.out.println("UP AND RIGHT");
+                            move(car, "FORWARD", movementUnit.getValue(), +10.0);
                         }
-                        // check if only D is pressed
-                        else if(!ke.isPressed(KeyCode.RIGHT) && ke.isPressed(KeyCode.D)){
-                            System.out.println("D");
+                        else if(ke.isPressed(KeyCode.DOWN) && ke.isPressed(KeyCode.LEFT)){
+                            System.out.println("DOWN AND LEFT");
+                            move(car, "BACKWARD", movementUnit.getValue(), -10.0);
                         }
-
-                        // check if both UP and M keys are pressed
-                        if (ke.isPressed(KeyCode.UP) && ke.isPressed(KeyCode.W)) {
-                            System.out.println("UP and W");
+                        else if(ke.isPressed(KeyCode.DOWN) && ke.isPressed(KeyCode.RIGHT)){
+                            System.out.println("DOWN AND RIGHT");
+                            move(car, "BACKWARD", movementUnit.getValue(), +10.0);
                         }
                         // check if only UP is pressed
-                        else if(ke.isPressed(KeyCode.UP) && !ke.isPressed(KeyCode.W)){
-                            System.out.println("UP");
-                            move(car, "FORWARD", 0.0);
-                        }
-                        // check if only W is pressed
-                        else if(!ke.isPressed(KeyCode.UP) && ke.isPressed(KeyCode.W)){
-                            System.out.println("W");
-                        }
-
-                        // check if both DOWN and S keys are pressed
-                        if (ke.isPressed(KeyCode.DOWN) && ke.isPressed(KeyCode.S)) {
-                            System.out.println("DOWN and S");
+                        else if(ke.isPressed(KeyCode.UP)){
+                            move(car, "FORWARD", movementUnit.getValue());
                         }
                         // check if only DOWN is pressed
-                        else if(ke.isPressed(KeyCode.DOWN) && !ke.isPressed(KeyCode.S)){
-                            System.out.println("DOWN");
-                            move(car, "BACKWARD", 0.0);
+                        else if(ke.isPressed(KeyCode.DOWN)){
+                            move(car, "BACKWARD", movementUnit.getValue());
+                        }
+                        // check if only LEFT is pressed
+                        else if(ke.isPressed(KeyCode.LEFT)){
+                            move(car, "FORWARD", 0.0, -10.0);
+                        }
+                        // check if only RIGHT is pressed
+                        else if(ke.isPressed(KeyCode.RIGHT)){
+                            move(car, "FORWARD", 0.0, +10.0);
+                        }
+                        // check if only W is pressed
+                        else if(ke.isPressed(KeyCode.W)){
+                            movementUnit.setValue(movementUnit.getValue() + 10.0);
                         }
                         // check if only S is pressed
-                        else if(!ke.isPressed(KeyCode.DOWN) && ke.isPressed(KeyCode.S)){
-                            System.out.println("S");
+                        else if(ke.isPressed(KeyCode.S)){
+                            movementUnit.setValue(movementUnit.getValue() - 10.0);
                         }
+
+                        coordinate.setValue(displayNumber(car.getX()) + ", " + displayNumber(car.getY()));
+                        rotation.setValue(displayNumber(car.getRotate()));
                     }
                 });
 
