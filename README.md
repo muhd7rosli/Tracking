@@ -9,4 +9,4 @@ Maneuver car with your mouse. This simple application is intended to show basic 
 Move the car with normal arrow key and additonal @ and S key for accelerate and decelerate.
 
 # Installation
-This application is build using simple maven script.
+This application is build using simple gradle script.
