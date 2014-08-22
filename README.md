@@ -1,5 +1,7 @@
 Car Tracking
 ========
+[![Build Status](https://travis-ci.org/muhd7rosli/Tracking.svg?branch=master)](https://travis-ci.org/muhd7rosli/Tracking)
+
 Maneuver car with your mouse. This simple application is intended to show basic mouse and keyboard
  interaction in JavaFX
  
