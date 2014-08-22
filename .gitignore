@@ -1,3 +1,5 @@
 .idea/
 out/
 Tracking.iml
+.gradle/
+build/
